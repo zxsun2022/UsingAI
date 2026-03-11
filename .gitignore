@@ -8,3 +8,6 @@
 # Editors
 .vscode/
 .idea/
+
+# Private drafts
+agents/structrade-os/launch/

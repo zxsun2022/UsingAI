@@ -1,5 +1,8 @@
 # StrucTrade OS
 
+Language: [中文](./README.md) | [English](./README.en.md)
+Specs: [中文 Spec](./StrucTrade_OS.md) | [English Spec](./StrucTrade_OS.en.md)
+
 StrucTrade OS 是一个面向 AI Agent 的个人投资操作系统规格。它的目标不是提供单一分析能力，而是把一个 Agent 展开为完整的美股投资辅助系统，覆盖信息摄入、研究提炼、风控约束、触发提醒、交易计划与复盘归因。
 
 ## 如何使用
