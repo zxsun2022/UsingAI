@@ -1,0 +1,118 @@
+.record-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── waveform row ── */
+.record-wave-row {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  opacity: 0;
+  transition: opacity var(--medium), transform var(--medium);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.record-wave-row.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.record-wave-row canvas {
+  display: block;
+}
+
+.record-timer {
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  min-width: 32px;
+}
+
+/* ── main button ── */
+.record-btn {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--border);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--fast);
+  z-index: 1;
+  box-shadow: 0 0 16px var(--accent-glow);
+  animation: breathe 3.5s ease-in-out infinite;
+}
+
+.record-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 24px var(--accent-glow-strong);
+}
+
+.record-btn.recording {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 32px var(--accent-glow-strong);
+  animation: none;
+}
+
+.record-btn.processing {
+  border-color: var(--accent);
+  animation: none;
+  opacity: 0.8;
+}
+
+/* ── breathing glow ── */
+@keyframes breathe {
+  0%, 100% { box-shadow: 0 0 12px var(--accent-glow); }
+  50%      { box-shadow: 0 0 24px var(--accent-glow-strong); }
+}
+
+/* ── pulse rings ── */
+.record-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  animation: ring-expand 1.6s ease-out infinite;
+  pointer-events: none;
+}
+
+.record-ring.delay {
+  animation-delay: 0.55s;
+}
+
+@keyframes ring-expand {
+  0%   { transform: scale(1); opacity: 0.55; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ── spinner ── */
+.record-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
