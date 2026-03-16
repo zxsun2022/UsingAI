@@ -45,10 +45,16 @@ const translations = {
 
     spaceHint: 'Hold spacebar to record',
     escHint: 'Press ESC to cancel',
+    processingEscHint: 'Press ESC to cancel processing',
+    finishCurrentTask: 'Finish the current recording or processing first.',
     recordingCancelled: 'Recording cancelled',
+    processingCancelled: 'Processing cancelled',
+    processingTargetChanged: 'The active session changed before the result returned.',
     copied: 'Copied to clipboard',
     copyFailed: 'Copy failed',
     undone: 'Undone',
+    replaceFallbackUsed: 'Applied the full updated text because the replace target was not found.',
+    replaceTargetMissing: 'Could not locate the text to replace.',
 
     history: 'History',
     noHistory: 'No history yet',
@@ -107,10 +113,16 @@ const translations = {
 
     spaceHint: '按住空格键快速录音',
     escHint: '按 ESC 取消录音',
+    processingEscHint: '按 ESC 取消处理中请求',
+    finishCurrentTask: '请先完成当前录音或处理中请求。',
     recordingCancelled: '已取消录音',
+    processingCancelled: '已取消处理',
+    processingTargetChanged: '结果返回前，当前会话已经切换。',
     copied: '已复制到剪贴板',
     copyFailed: '复制失败',
     undone: '已撤销',
+    replaceFallbackUsed: '未找到替换目标，已改为应用完整更新后的文本。',
+    replaceTargetMissing: '找不到需要替换的原文。',
 
     history: '历史记录',
     noHistory: '暂无历史记录',

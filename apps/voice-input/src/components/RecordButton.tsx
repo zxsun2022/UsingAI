@@ -78,7 +78,11 @@ export function RecordButton({
 
   const handleClick = () => {
     if (isProcessing) return
-    isRecording ? onStop() : onStart()
+    if (isRecording) {
+      onStop()
+    } else {
+      onStart()
+    }
   }
 
   const stateClass = isRecording ? 'recording' : isProcessing ? 'processing' : ''

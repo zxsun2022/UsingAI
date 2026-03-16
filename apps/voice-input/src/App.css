@@ -89,6 +89,11 @@
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
+.mode-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ── main content ── */
 .main {
   flex: 1;

@@ -36,9 +36,11 @@ export default function App() {
   const [activeMode, setActiveMode] = useState(store.getActiveMode)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sessions, setSessions] = useState<store.Session[]>(store.getSessions)
+  const [isSubmittingAudio, setIsSubmittingAudio] = useState(false)
 
   const spaceDownRef = useRef(false)
   const textRef = useRef(text)
+  const sessionIdRef = useRef(sessionId)
   const dictionaryRef = useRef(dictionary)
   const customInstructionsRef = useRef(customInstructions)
   const modesRef = useRef(modes)
@@ -46,8 +48,10 @@ export default function App() {
 
   const recorder = useRecorder()
   const gemini = useGemini(apiKey, model)
+  const isBusy = recorder.isRecording || isSubmittingAudio || gemini.isProcessing
 
   useEffect(() => { textRef.current = text }, [text])
+  useEffect(() => { sessionIdRef.current = sessionId }, [sessionId])
   useEffect(() => { dictionaryRef.current = dictionary }, [dictionary])
   useEffect(() => { customInstructionsRef.current = customInstructions }, [customInstructions])
   useEffect(() => { modesRef.current = modes }, [modes])
@@ -93,15 +97,17 @@ export default function App() {
     setToast({ msg, type, ...opts })
   }
 
+  const showBusyToast = () => {
+    showToast(t(lang, 'finishCurrentTask'), 'error')
+  }
+
   // surface recorder errors
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- toast in response to external state change
     if (recorder.errorKey) showToast(t(lang, recorder.errorKey), 'error')
   }, [recorder.errorKey, lang])
 
   // surface API errors
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- toast in response to external state change
     if (gemini.error) showToast(gemini.error, 'error')
   }, [gemini.error])
 
@@ -122,6 +128,10 @@ export default function App() {
   }
 
   const handleApiKeyDelete = () => {
+    if (isBusy) {
+      showBusyToast()
+      return
+    }
     store.removeApiKey()
     setApiKey(null)
     setSettingsOpen(false)
@@ -153,51 +163,81 @@ export default function App() {
   }
 
   const applyAction = useCallback(
-    (action: GeminiAction) => {
+    (action: GeminiAction): 'applied' | 'fallback' | 'notFound' => {
       switch (action.action) {
         case 'transcribe':
         case 'rewrite':
           setText(action.content ?? '')
-          break
+          return 'applied'
         case 'append':
           setText((prev) => {
             const separator = prev.trim() ? (prev.endsWith('\n') ? '' : '\n') : ''
             return prev + separator + (action.content ?? '')
           })
-          break
-        case 'replace':
-          if (action.search && action.replace !== undefined) {
-            setText((prev) => prev.replace(action.search!, action.replace!))
+          return 'applied'
+        case 'replace': {
+          const sourceText = textRef.current
+          if (action.search && action.replace !== undefined && sourceText.includes(action.search)) {
+            setText(sourceText.replace(action.search, action.replace))
+            return 'applied'
           }
-          break
+          if (action.content !== undefined) {
+            setText(action.content)
+            return 'fallback'
+          }
+          return 'notFound'
+        }
       }
     },
     [],
   )
 
   const handleRecordStart = useCallback(async () => {
+    if (isBusy) return
     await recorder.startRecording()
-  }, [recorder])
+  }, [isBusy, recorder])
 
   const handleRecordStop = useCallback(async () => {
-    const blob = await recorder.stopRecording()
-    if (!blob) return
+    if (isSubmittingAudio) return
+    setIsSubmittingAudio(true)
 
-    const currentText = textRef.current
-    const currentDict = dictionaryRef.current
-    const currentCustomInstr = customInstructionsRef.current
-    const currentModes = modesRef.current
-    const currentActiveMode = activeModeRef.current
-    const activeModeObj = currentModes.find(m => m.id === currentActiveMode)
+    const requestSessionId = sessionIdRef.current
+    try {
+      const blob = await recorder.stopRecording()
+      if (!blob) return
 
-    setUndoSnapshot(currentText)
-    const result = await gemini.processAudio(blob, currentText, {
-      dictionary: currentDict,
-      customInstructions: currentCustomInstr,
-      modeInstructions: activeModeObj?.instructions,
-    })
-    if (result) applyAction(result)
-  }, [recorder, gemini, applyAction])
+      const currentText = textRef.current
+      const currentDict = dictionaryRef.current
+      const currentCustomInstr = customInstructionsRef.current
+      const currentModes = modesRef.current
+      const currentActiveMode = activeModeRef.current
+      const activeModeObj = currentModes.find(m => m.id === currentActiveMode)
+
+      const result = await gemini.processAudio(blob, currentText, {
+        dictionary: currentDict,
+        customInstructions: currentCustomInstr,
+        modeInstructions: activeModeObj?.instructions,
+      })
+      if (!result) return
+
+      if (sessionIdRef.current !== requestSessionId) {
+        showToast(t(lang, 'processingTargetChanged'), 'error')
+        return
+      }
+
+      const outcome = applyAction(result)
+      if (outcome !== 'notFound') {
+        setUndoSnapshot(currentText)
+      }
+      if (outcome === 'fallback') {
+        showToast(t(lang, 'replaceFallbackUsed'), 'success')
+      } else if (outcome === 'notFound') {
+        showToast(t(lang, 'replaceTargetMissing'), 'error')
+      }
+    } finally {
+      setIsSubmittingAudio(false)
+    }
+  }, [recorder, gemini, applyAction, isSubmittingAudio, lang])
 
   const handleUndo = () => {
     if (undoSnapshot === null) return
@@ -211,6 +251,11 @@ export default function App() {
     spaceDownRef.current = false
     showToast(t(lang, 'recordingCancelled'), 'success')
   }, [recorder, lang])
+
+  const handleCancelProcessing = useCallback(() => {
+    if (!gemini.cancelProcessing()) return
+    showToast(t(lang, 'processingCancelled'), 'success')
+  }, [gemini, lang])
 
   // keyboard shortcuts: spacebar hold-to-talk + ESC to cancel
   useEffect(() => {
@@ -229,9 +274,14 @@ export default function App() {
         handleCancelRecording()
         return
       }
+      if (e.code === 'Escape' && gemini.isProcessing) {
+        e.preventDefault()
+        handleCancelProcessing()
+        return
+      }
       if (e.code !== 'Space' || e.repeat) return
       if (isEditable(e.target)) return
-      if (gemini.isProcessing || settingsOpen) return
+      if (isBusy || settingsOpen) return
       e.preventDefault()
       spaceDownRef.current = true
       if (!recorder.isRecording) {
@@ -255,7 +305,7 @@ export default function App() {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [apiKey, recorder.isRecording, gemini.isProcessing, settingsOpen, handleRecordStop, handleCancelRecording, recorder])
+  }, [apiKey, recorder.isRecording, gemini.isProcessing, isBusy, settingsOpen, handleRecordStop, handleCancelRecording, handleCancelProcessing, recorder])
 
   const handleCopy = async () => {
     if (!text.trim()) return
@@ -273,6 +323,10 @@ export default function App() {
   }
 
   const handleNewSession = () => {
+    if (isBusy) {
+      showBusyToast()
+      return
+    }
     if (text.trim() && sessionId) {
       store.archiveSession({
         id: sessionId,
@@ -291,6 +345,10 @@ export default function App() {
   }
 
   const handleSelectSession = (session: store.Session) => {
+    if (isBusy) {
+      showBusyToast()
+      return
+    }
     // save current session first
     if (text.trim() && sessionId) {
       store.archiveSession({
@@ -311,6 +369,10 @@ export default function App() {
   }
 
   const handleDeleteSession = (session: store.Session) => {
+    if (isBusy) {
+      showBusyToast()
+      return
+    }
     const removed = store.deleteSession(session.id)
     if (!removed) return
 
@@ -354,6 +416,7 @@ export default function App() {
         open={sidebarOpen}
         sessions={sessions}
         activeSessionId={sessionId}
+        disabled={isBusy}
         onSelectSession={handleSelectSession}
         onDeleteSession={handleDeleteSession}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -380,17 +443,18 @@ export default function App() {
               className="mode-select"
               value={activeMode}
               onChange={(e) => handleActiveModeChange(e.target.value)}
+              disabled={isBusy}
             >
               {modes.map(m => (
                 <option key={m.id} value={m.id}>{m.name || 'Unnamed'}</option>
               ))}
             </select>
-            <button
-              className="icon-btn"
-              onClick={handleUndo}
-              disabled={undoSnapshot === null}
-              aria-label={t(lang, 'undo')}
-              title={t(lang, 'undo')}
+              <button
+                className="icon-btn"
+                onClick={handleUndo}
+                disabled={undoSnapshot === null || isBusy}
+                aria-label={t(lang, 'undo')}
+                title={t(lang, 'undo')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="1 4 1 10 7 10" />
@@ -411,13 +475,14 @@ export default function App() {
         </header>
 
         <main className="main">
-          <TextEditor lang={lang} value={text} onChange={setText} />
+          <TextEditor lang={lang} value={text} onChange={setText} disabled={isBusy} />
 
           <div className="action-bar">
             <div className="action-bar-side">
               <button
                 className="action-btn"
                 onClick={handleNewSession}
+                disabled={isBusy}
                 aria-label={t(lang, 'newSession')}
                 title={t(lang, 'newSession')}
               >
@@ -431,7 +496,7 @@ export default function App() {
             <RecordButton
               lang={lang}
               isRecording={recorder.isRecording}
-              isProcessing={gemini.isProcessing}
+              isProcessing={isSubmittingAudio || gemini.isProcessing}
               duration={recorder.duration}
               analyserNode={recorder.analyserNode}
               onStart={handleRecordStart}
@@ -442,7 +507,7 @@ export default function App() {
               <button
                 className="action-btn"
                 onClick={handleCopy}
-                disabled={!text.trim()}
+                disabled={!text.trim() || isBusy}
                 aria-label={t(lang, 'copy')}
                 title={t(lang, 'copy')}
               >
@@ -455,7 +520,11 @@ export default function App() {
           </div>
 
           <p className="shortcut-hint">
-            {recorder.isRecording ? t(lang, 'escHint') : t(lang, 'spaceHint')}
+            {gemini.isProcessing
+              ? t(lang, 'processingEscHint')
+              : recorder.isRecording
+                ? t(lang, 'escHint')
+                : t(lang, 'spaceHint')}
           </p>
         </main>
 

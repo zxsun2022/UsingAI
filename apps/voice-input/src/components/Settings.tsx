@@ -30,12 +30,16 @@ export function Settings({
   onCustomInstructionsSave, onModesSave, onModelChange, onLangChange, onThemeChange,
 }: Props) {
   const [key, setKey] = useState(apiKey)
+  const [draftLang, setDraftLang] = useState<Lang>(lang)
+  const [draftThemePref, setDraftThemePref] = useState<ThemePref>(themePref)
   const [show, setShow] = useState(false)
   const [dict, setDict] = useState(dictionary)
   const [customInstr, setCustomInstr] = useState(customInstructions)
   const [localModes, setLocalModes] = useState<Mode[]>(modes)
+  const [draftModel, setDraftModel] = useState(model)
   const [expandedMode, setExpandedMode] = useState<string | null>(null)
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const uiLang = draftLang
 
   useEffect(() => {
     if (!open) return
@@ -53,6 +57,9 @@ export function Settings({
     onDictionarySave(dict)
     onCustomInstructionsSave(customInstr)
     onModesSave(localModes)
+    onModelChange(draftModel)
+    onLangChange(draftLang)
+    onThemeChange(draftThemePref)
     onClose()
   }
 
@@ -77,7 +84,7 @@ export function Settings({
       <div className="settings-backdrop" onClick={onClose} />
       <div className="settings-panel">
         <div className="settings-header">
-          <h2 className="settings-title">{t(lang, 'settings')}</h2>
+          <h2 className="settings-title">{t(uiLang, 'settings')}</h2>
           <button className="settings-close" onClick={onClose} aria-label="Close">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -91,7 +98,7 @@ export function Settings({
 
           {/* API Key */}
           <div className="settings-field">
-            <label className="settings-label">{t(lang, 'apiKeyLabel')}</label>
+            <label className="settings-label">{t(uiLang, 'apiKeyLabel')}</label>
             <div className="settings-input-wrap">
               <input
                 className="settings-input"
@@ -105,49 +112,49 @@ export function Settings({
                 className="settings-toggle"
                 onClick={() => setShow(!show)}
               >
-                {show ? t(lang, 'hide') : t(lang, 'show')}
+                {show ? t(uiLang, 'hide') : t(uiLang, 'show')}
               </button>
             </div>
           </div>
 
           {/* Theme */}
           <div className="settings-field">
-            <label className="settings-label">{t(lang, 'themeLabel')}</label>
+            <label className="settings-label">{t(uiLang, 'themeLabel')}</label>
             <div className="settings-lang-row">
               <button
-                className={`settings-lang-btn ${themePref === 'auto' ? 'active' : ''}`}
-                onClick={() => onThemeChange('auto')}
+                className={`settings-lang-btn ${draftThemePref === 'auto' ? 'active' : ''}`}
+                onClick={() => setDraftThemePref('auto')}
               >
-                {t(lang, 'themeAuto')}
+                {t(uiLang, 'themeAuto')}
               </button>
               <button
-                className={`settings-lang-btn ${themePref === 'dark' ? 'active' : ''}`}
-                onClick={() => onThemeChange('dark')}
+                className={`settings-lang-btn ${draftThemePref === 'dark' ? 'active' : ''}`}
+                onClick={() => setDraftThemePref('dark')}
               >
-                {t(lang, 'themeDark')}
+                {t(uiLang, 'themeDark')}
               </button>
               <button
-                className={`settings-lang-btn ${themePref === 'light' ? 'active' : ''}`}
-                onClick={() => onThemeChange('light')}
+                className={`settings-lang-btn ${draftThemePref === 'light' ? 'active' : ''}`}
+                onClick={() => setDraftThemePref('light')}
               >
-                {t(lang, 'themeLight')}
+                {t(uiLang, 'themeLight')}
               </button>
             </div>
           </div>
 
           {/* Language */}
           <div className="settings-field">
-            <label className="settings-label">{t(lang, 'languageLabel')}</label>
+            <label className="settings-label">{t(uiLang, 'languageLabel')}</label>
             <div className="settings-lang-row">
               <button
-                className={`settings-lang-btn ${lang === 'en' ? 'active' : ''}`}
-                onClick={() => onLangChange('en')}
+                className={`settings-lang-btn ${draftLang === 'en' ? 'active' : ''}`}
+                onClick={() => setDraftLang('en')}
               >
                 English
               </button>
               <button
-                className={`settings-lang-btn ${lang === 'zh' ? 'active' : ''}`}
-                onClick={() => onLangChange('zh')}
+                className={`settings-lang-btn ${draftLang === 'zh' ? 'active' : ''}`}
+                onClick={() => setDraftLang('zh')}
               >
                 中文
               </button>
@@ -161,7 +168,7 @@ export function Settings({
             className="settings-advanced-toggle"
             onClick={() => setAdvancedOpen(!advancedOpen)}
           >
-            <span>{t(lang, 'advancedSettings')}</span>
+            <span>{t(uiLang, 'advancedSettings')}</span>
             <svg
               className={`settings-advanced-chevron ${advancedOpen ? 'open' : ''}`}
               width="14" height="14" viewBox="0 0 24 24"
@@ -175,11 +182,11 @@ export function Settings({
             <div className="settings-advanced-body">
               {/* Model */}
               <div className="settings-field">
-                <label className="settings-label">{t(lang, 'modelLabel')}</label>
+                <label className="settings-label">{t(uiLang, 'modelLabel')}</label>
                 <select
                   className="settings-select"
-                  value={model}
-                  onChange={(e) => onModelChange(e.target.value)}
+                  value={draftModel}
+                  onChange={(e) => setDraftModel(e.target.value)}
                 >
                   {AVAILABLE_MODELS.map(m => (
                     <option key={m.id} value={m.id}>{m.label}</option>
@@ -189,13 +196,13 @@ export function Settings({
 
               {/* Dictionary */}
               <div className="settings-field">
-                <label className="settings-label">{t(lang, 'dictionaryLabel')}</label>
-                <p className="settings-hint">{t(lang, 'dictionaryHint')}</p>
+                <label className="settings-label">{t(uiLang, 'dictionaryLabel')}</label>
+                <p className="settings-hint">{t(uiLang, 'dictionaryHint')}</p>
                 <textarea
                   className="settings-textarea"
                   value={dict}
                   onChange={(e) => setDict(e.target.value)}
-                  placeholder={t(lang, 'dictionaryPlaceholder')}
+                  placeholder={t(uiLang, 'dictionaryPlaceholder')}
                   rows={4}
                   spellCheck={false}
                 />
@@ -203,13 +210,13 @@ export function Settings({
 
               {/* Custom Instructions */}
               <div className="settings-field">
-                <label className="settings-label">{t(lang, 'customInstructionsLabel')}</label>
-                <p className="settings-hint">{t(lang, 'customInstructionsHint')}</p>
+                <label className="settings-label">{t(uiLang, 'customInstructionsLabel')}</label>
+                <p className="settings-hint">{t(uiLang, 'customInstructionsHint')}</p>
                 <textarea
                   className="settings-textarea"
                   value={customInstr}
                   onChange={(e) => setCustomInstr(e.target.value)}
-                  placeholder={t(lang, 'customInstructionsPlaceholder')}
+                  placeholder={t(uiLang, 'customInstructionsPlaceholder')}
                   rows={3}
                   spellCheck={false}
                 />
@@ -217,8 +224,8 @@ export function Settings({
 
               {/* Modes */}
               <div className="settings-field">
-                <label className="settings-label">{t(lang, 'modesLabel')}</label>
-                <p className="settings-hint">{t(lang, 'modesHint')}</p>
+                <label className="settings-label">{t(uiLang, 'modesLabel')}</label>
+                <p className="settings-hint">{t(uiLang, 'modesHint')}</p>
                 <div className="modes-list">
                   {localModes.map(mode => {
                     const isExpanded = expandedMode === mode.id
@@ -229,7 +236,7 @@ export function Settings({
                           onClick={() => setExpandedMode(isExpanded ? null : mode.id)}
                         >
                           <span className="mode-name">
-                            {mode.name || t(lang, 'modePlaceholderName')}
+                            {mode.name || t(uiLang, 'modePlaceholderName')}
                           </span>
                           {!isExpanded && mode.instructions && (
                             <span className="mode-preview">{mode.instructions}</span>
@@ -249,14 +256,14 @@ export function Settings({
                                 className="settings-input mode-name-input"
                                 value={mode.name}
                                 onChange={(e) => updateModeField(mode.id, 'name', e.target.value)}
-                                placeholder={t(lang, 'modePlaceholderName')}
+                                placeholder={t(uiLang, 'modePlaceholderName')}
                               />
                             )}
                             <textarea
                               className="settings-textarea mode-instr-textarea"
                               value={mode.instructions}
                               onChange={(e) => updateModeField(mode.id, 'instructions', e.target.value)}
-                              placeholder={t(lang, 'modePlaceholderInstr')}
+                              placeholder={t(uiLang, 'modePlaceholderInstr')}
                               rows={3}
                             />
                             {!mode.builtin && (
@@ -264,7 +271,7 @@ export function Settings({
                                 className="mode-delete-btn"
                                 onClick={() => removeMode(mode.id)}
                               >
-                                {t(lang, 'deleteMode')}
+                                {t(uiLang, 'deleteMode')}
                               </button>
                             )}
                           </div>
@@ -273,7 +280,7 @@ export function Settings({
                     )
                   })}
                   <button className="mode-add-btn" onClick={addMode}>
-                    + {t(lang, 'addMode')}
+                    + {t(uiLang, 'addMode')}
                   </button>
                 </div>
               </div>
@@ -283,10 +290,10 @@ export function Settings({
           {/* Actions */}
           <div className="settings-actions">
             <button className="settings-save" onClick={handleSave} disabled={!key.trim()}>
-              {t(lang, 'save')}
+              {t(uiLang, 'save')}
             </button>
             <button className="settings-danger" onClick={onDelete}>
-              {t(lang, 'deleteKey')}
+              {t(uiLang, 'deleteKey')}
             </button>
           </div>
         </div>

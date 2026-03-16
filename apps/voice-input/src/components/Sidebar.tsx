@@ -8,6 +8,7 @@ interface Props {
   open: boolean
   sessions: Session[]
   activeSessionId: string
+  disabled?: boolean
   onSelectSession: (session: Session) => void
   onDeleteSession: (session: Session) => void
   onToggle: () => void
@@ -40,6 +41,7 @@ export function Sidebar({
   open,
   sessions,
   activeSessionId,
+  disabled = false,
   onSelectSession,
   onDeleteSession,
   onToggle,
@@ -70,18 +72,27 @@ export function Sidebar({
               <div
                 key={s.id}
                 className={`sidebar-item ${s.id === activeSessionId ? 'sidebar-item-active' : ''}`}
-                onClick={() => onSelectSession(s)}
               >
-                <div className="sidebar-item-content">
-                  <span className="sidebar-item-title">{sessionTitle(s)}</span>
-                  <span className="sidebar-item-time">{formatRelativeTime(s.updatedAt, lang)}</span>
-                </div>
                 <button
+                  type="button"
+                  className="sidebar-item-main"
+                  onClick={() => onSelectSession(s)}
+                  disabled={disabled}
+                  aria-pressed={s.id === activeSessionId}
+                >
+                  <div className="sidebar-item-content">
+                    <span className="sidebar-item-title">{sessionTitle(s)}</span>
+                    <span className="sidebar-item-time">{formatRelativeTime(s.updatedAt, lang)}</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
                   className="sidebar-item-delete"
                   onClick={(e) => {
                     e.stopPropagation()
                     onDeleteSession(s)
                   }}
+                  disabled={disabled}
                   aria-label="Delete session"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

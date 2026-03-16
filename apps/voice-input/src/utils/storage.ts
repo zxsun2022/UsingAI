@@ -46,6 +46,65 @@ export const DEFAULT_MODES: Mode[] = [
   { id: 'notes', name: 'Notes', instructions: 'Use bullet points, keep concise, highlight key information. Structure as organized notes.', builtin: true },
 ]
 
+function parseJson(key: string): unknown {
+  const raw = localStorage.getItem(key)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function normalizeSession(value: unknown): Session | null {
+  if (!isRecord(value)) return null
+  if (
+    typeof value.id !== 'string' ||
+    typeof value.text !== 'string' ||
+    typeof value.createdAt !== 'string' ||
+    typeof value.updatedAt !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    id: value.id,
+    text: value.text,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+  }
+}
+
+function normalizeMode(value: unknown): Mode | null {
+  if (!isRecord(value)) return null
+  if (typeof value.id !== 'string' || typeof value.name !== 'string' || typeof value.instructions !== 'string') {
+    return null
+  }
+
+  return {
+    id: value.id,
+    name: value.name,
+    instructions: value.instructions,
+    builtin: value.builtin === true,
+  }
+}
+
+function dedupeAndSortSessions(sessions: Session[]): Session[] {
+  const byId = new Map<string, Session>()
+
+  for (const session of sessions) {
+    byId.set(session.id, session)
+  }
+
+  return [...byId.values()]
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 50)
+}
+
 // ── API Key ──
 
 export function getApiKey(): string | null {
@@ -84,13 +143,7 @@ export function saveThemePref(pref: ThemePref) {
 // ── Session (current) ──
 
 export function getCurrentSession(): Session | null {
-  const raw = localStorage.getItem(KEYS.SESSION)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
+  return normalizeSession(parseJson(KEYS.SESSION))
 }
 
 export function saveSession(session: Session) {
@@ -109,25 +162,14 @@ export function createNewSession(): Session {
 // ── Session archive ──
 
 export function getSessions(): Session[] {
-  const raw = localStorage.getItem(KEYS.SESSIONS)
-  if (!raw) return []
-  try {
-    return JSON.parse(raw)
-  } catch {
-    return []
-  }
+  const parsed = parseJson(KEYS.SESSIONS)
+  if (!Array.isArray(parsed)) return []
+  return dedupeAndSortSessions(parsed.map(normalizeSession).filter((session): session is Session => session !== null))
 }
 
 export function archiveSession(session: Session) {
   if (!session.text.trim()) return
-  const sessions = getSessions()
-  const idx = sessions.findIndex(s => s.id === session.id)
-  if (idx >= 0) {
-    sessions[idx] = session
-  } else {
-    sessions.unshift(session)
-  }
-  if (sessions.length > 50) sessions.length = 50
+  const sessions = dedupeAndSortSessions([session, ...getSessions()])
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions))
 }
 
@@ -141,10 +183,7 @@ export function deleteSession(id: string): Session | null {
 }
 
 export function restoreSession(session: Session) {
-  const sessions = getSessions()
-  sessions.unshift(session)
-  sessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-  if (sessions.length > 50) sessions.length = 50
+  const sessions = dedupeAndSortSessions([session, ...getSessions()])
   localStorage.setItem(KEYS.SESSIONS, JSON.stringify(sessions))
 }
 
@@ -161,7 +200,8 @@ export function saveDictionary(dict: string) {
 // ── Language ──
 
 export function getLang(): Lang {
-  return (localStorage.getItem(KEYS.LANG) as Lang) || 'en'
+  const stored = localStorage.getItem(KEYS.LANG)
+  return stored === 'en' || stored === 'zh' ? stored : 'en'
 }
 
 export function saveLang(lang: Lang) {
@@ -171,7 +211,8 @@ export function saveLang(lang: Lang) {
 // ── Model ──
 
 export function getModel(): string {
-  return localStorage.getItem(KEYS.MODEL) ?? DEFAULT_MODEL
+  const stored = localStorage.getItem(KEYS.MODEL)
+  return typeof stored === 'string' && stored.trim() ? stored : DEFAULT_MODEL
 }
 
 export function saveModel(model: string) {
@@ -191,14 +232,11 @@ export function saveCustomInstructions(text: string) {
 // ── Modes ──
 
 export function getModes(): Mode[] {
-  const raw = localStorage.getItem(KEYS.MODES)
-  if (!raw) return DEFAULT_MODES
-  try {
-    const parsed = JSON.parse(raw) as Mode[]
-    return parsed.length > 0 ? parsed : DEFAULT_MODES
-  } catch {
-    return DEFAULT_MODES
-  }
+  const parsed = parseJson(KEYS.MODES)
+  if (!Array.isArray(parsed)) return DEFAULT_MODES
+
+  const modes = parsed.map(normalizeMode).filter((mode): mode is Mode => mode !== null)
+  return modes.length > 0 ? modes : DEFAULT_MODES
 }
 
 export function saveModes(modes: Mode[]) {
@@ -206,7 +244,8 @@ export function saveModes(modes: Mode[]) {
 }
 
 export function getActiveMode(): string {
-  return localStorage.getItem(KEYS.ACTIVE_MODE) ?? 'general'
+  const stored = localStorage.getItem(KEYS.ACTIVE_MODE)
+  return typeof stored === 'string' && stored.trim() ? stored : 'general'
 }
 
 export function saveActiveMode(id: string) {

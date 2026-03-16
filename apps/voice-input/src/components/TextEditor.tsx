@@ -6,9 +6,10 @@ interface Props {
   lang: Lang
   value: string
   onChange: (text: string) => void
+  disabled?: boolean
 }
 
-export function TextEditor({ lang, value, onChange }: Props) {
+export function TextEditor({ lang, value, onChange, disabled = false }: Props) {
   return (
     <div className="editor-wrap">
       <textarea
@@ -17,6 +18,7 @@ export function TextEditor({ lang, value, onChange }: Props) {
         onChange={(e) => onChange(e.target.value)}
         placeholder={t(lang, 'editorPlaceholder')}
         spellCheck={false}
+        disabled={disabled}
       />
     </div>
   )

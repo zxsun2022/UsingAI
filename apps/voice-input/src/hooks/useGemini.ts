@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 export interface GeminiAction {
   action: 'append' | 'replace' | 'rewrite' | 'transcribe'
@@ -13,61 +13,79 @@ export interface ProcessOptions {
   modeInstructions?: string
 }
 
-const SYSTEM_PROMPT = `You are a voice dictation formatter. You receive raw audio and must output clean, well-structured text as JSON.
+const RESPONSE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    action: {
+      type: 'STRING',
+      enum: ['append', 'replace', 'rewrite', 'transcribe'],
+    },
+    content: { type: 'STRING' },
+    search: { type: 'STRING' },
+    replace: { type: 'STRING' },
+  },
+  required: ['action'],
+} as const
 
-CRITICAL RULES:
-- Preserve the user's intended meaning EXACTLY. Never invent facts, add details, or generate content the user did not say.
-- Output in the same language the user speaks.
+const SYSTEM_PROMPT = `You are a voice dictation formatter.
 
-CLEANUP RULES:
-1. Remove ALL filler words: 嗯、那个、就是说、然后、um、uh、like、you know、so、well...
-2. Remove stutters and repetitions: "买一买一瓶" → "买一瓶", "I I think" → "I think"
-3. Self-corrections — when user retracts something, REMOVE the retracted item entirely. Trigger phrases:
-   - Chinese: 不对、不是、不要、不买了、算了、其实、不不不、还是不要
-   - English: no wait, actually not, scratch that, never mind, I mean, no not that
-4. Recognize enumerations/lists and format each item on its own line (\\n separator, NO bullet markers like - or *)
-5. Adapt structure to content: lists for enumerated items, paragraphs for narrative, short lines for chat-like speech
-6. Apply personal dictionary: entries are "pronunciation/misheard form → correct written form" — when the audio sounds like the left side, write the right side
+Return exactly one JSON object. No markdown, no code fences, no explanation.
 
-EXAMPLES:
+Priority order:
+1. Preserve the user's intended meaning exactly.
+2. Apply explicit corrections the user makes while speaking.
+3. Clean up disfluencies and structure the text.
+4. Apply mode/style instructions only if they do not conflict with 1-3.
 
-Voice: "呃我今天要买一瓶维生素D3 然后买一斤葱 然后买一斤苹果 买一斤梨子 再买买一斤橘子 不是梨子 然后再买一点速溶咖啡 再买一斤牛肉 再买一斤羊肉 不 不买羊肉了 就这些"
+Core rules:
+- Keep the output in the language implied by the speech and existing text unless custom instructions explicitly require otherwise.
+- Never invent facts, names, numbers, or details the user did not say.
+- Remove filler words and disfluencies such as 嗯、那个、就是说、然后、um、uh、like、you know、so、well.
+- Remove stutters and immediate repetitions.
+- Respect self-corrections and retractions. Remove the retracted content entirely.
+- Apply the personal dictionary when the spoken form matches an entry.
+- By default, format enumerations as one item per line using "\\n". Do not add bullet markers unless the active mode or custom instructions explicitly require bullets.
+
+Choose exactly one action:
+- {"action":"transcribe","content":"..."} when there is no meaningful existing text.
+- {"action":"append","content":"..."} when the audio adds new text after the existing text. Return only the new text, not the full draft.
+- {"action":"replace","search":"...","replace":"...","content":"..."} when a specific part of the existing text should change.
+- {"action":"rewrite","content":"..."} when the update affects multiple parts, the target span is ambiguous, or a clean replace is unsafe.
+
+Rules for "replace":
+- "search" must be an exact substring from the existing text.
+- "replace" is the exact new text for that substring.
+- Also include "content" as the full updated text after the replacement.
+- If you cannot identify a single exact substring confidently, do not guess. Use "rewrite" instead.
+
+Examples:
+Voice: "呃我今天要买一瓶维生素D3 然后买一斤葱 然后买一斤苹果 买一斤梨子 再买买一斤橘子 不是梨子 然后再买一点速溶咖啡 再买一斤牛肉 不买羊肉了 就这些"
 Output: {"action":"transcribe","content":"我今天要买：\\n一瓶维生素D3\\n一斤葱\\n一斤苹果\\n一斤橘子\\n一点速溶咖啡\\n一斤牛肉"}
-Reasoning: "梨子" removed (self-correction "不是梨子"), "羊肉" removed ("不买羊肉了"), all fillers removed, list formatted
-
-Voice: "I need to buy um some milk and uh bread and also eggs no wait not eggs and then some cheese"
-Output: {"action":"transcribe","content":"I need to buy:\\nmilk\\nbread\\ncheese"}
-Reasoning: "eggs" removed (self-correction "no wait not eggs"), fillers removed, list formatted
-
-Voice: "我觉得这个项目呢主要有三个风险 第一是技术风险 就是说我们的API可能不稳定 第二呢是市场风险 竞争对手可能会先发布 第三个是 算了第三个不说了"
-Output: {"action":"transcribe","content":"这个项目主要有两个风险：\\n第一，技术风险——我们的API可能不稳定\\n第二，市场风险——竞争对手可能会先发布"}
-Reasoning: third risk retracted ("算了第三个不说了"), "三个" corrected to "两个", fillers removed, structured as numbered points
-
-Existing text: "会议讨论了三个议题"
-Voice: "把三个改成四个"
-Output: {"action":"replace","search":"三个议题","replace":"四个议题"}
 
 Existing text: "联系人是张三"
 Voice: "不对应该是李四"
-Output: {"action":"replace","search":"张三","replace":"李四"}
+Output: {"action":"replace","search":"张三","replace":"李四","content":"联系人是李四"}
 
 Existing text: "今天天气很好。"
 Voice: "接下来说说明天的计划"
-Output: {"action":"append","content":"\\n明天的计划："}
-
-JSON ACTIONS (choose one):
-- {"action":"transcribe","content":"..."} — first input, no existing text
-- {"action":"append","content":"..."} — continue/add to existing text
-- {"action":"replace","search":"...","replace":"..."} — modify part of existing text
-- {"action":"rewrite","content":"..."} — full replacement when edits are too complex`
+Output: {"action":"append","content":"明天的计划："}`
 
 export function useGemini(apiKey: string | null, model = 'gemini-2.5-flash-lite') {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const requestIdRef = useRef(0)
 
   const processAudio = useCallback(
     async (audioBlob: Blob, existingText: string, opts: ProcessOptions = {}): Promise<GeminiAction | null> => {
       if (!apiKey) return null
+
+      const requestId = requestIdRef.current + 1
+      requestIdRef.current = requestId
+      abortRef.current?.abort()
+
+      const controller = new AbortController()
+      abortRef.current = controller
 
       setIsProcessing(true)
       setError(null)
@@ -99,10 +117,13 @@ export function useGemini(apiKey: string | null, model = 'gemini-2.5-flash-lite'
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
               system_instruction: { parts: [{ text: systemPrompt }] },
               generationConfig: {
                 responseMimeType: 'application/json',
+                responseSchema: RESPONSE_SCHEMA,
+                temperature: 0.2,
               },
               contents: [
                 {
@@ -122,34 +143,60 @@ export function useGemini(apiKey: string | null, model = 'gemini-2.5-flash-lite'
         }
 
         const data = await res.json()
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text
+        const rawText = extractResponseText(data)
 
         if (!rawText) throw new Error('API returned empty response')
 
         return parseGeminiResponse(rawText, existingText)
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return null
+        }
         const msg = err instanceof Error ? err.message : 'Unknown error'
         setError(msg)
         return null
       } finally {
-        setIsProcessing(false)
+        if (abortRef.current === controller) {
+          abortRef.current = null
+        }
+        if (requestIdRef.current === requestId) {
+          setIsProcessing(false)
+        }
       }
     },
     [apiKey, model],
   )
 
-  return { processAudio, isProcessing, error }
+  const cancelProcessing = useCallback((): boolean => {
+    if (!abortRef.current) return false
+    requestIdRef.current += 1
+    abortRef.current.abort()
+    abortRef.current = null
+    setIsProcessing(false)
+    setError(null)
+    return true
+  }, [])
+
+  return { processAudio, cancelProcessing, isProcessing, error }
 }
 
 function parseGeminiResponse(rawText: string, existingText: string): GeminiAction {
+  const normalized = normalizeRawText(rawText)
+  let parsed: unknown
+
   try {
-    return JSON.parse(rawText) as GeminiAction
+    parsed = JSON.parse(normalized)
   } catch {
+    if (!normalized) {
+      throw new Error('Model returned an empty response.')
+    }
     return {
       action: existingText.trim() ? 'append' : 'transcribe',
-      content: rawText.trim(),
+      content: normalized,
     }
   }
+
+  return validateGeminiAction(parsed)
 }
 
 function blobToBase64(blob: Blob): Promise<string> {
@@ -162,4 +209,69 @@ function blobToBase64(blob: Blob): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(blob)
   })
+}
+
+function extractResponseText(payload: unknown): string {
+  if (!isRecord(payload)) return ''
+  const candidates = Array.isArray(payload.candidates) ? payload.candidates : []
+
+  return candidates
+    .flatMap((candidate) => {
+      if (!isRecord(candidate) || !isRecord(candidate.content)) return []
+      return Array.isArray(candidate.content.parts) ? candidate.content.parts : []
+    })
+    .map((part) => (isRecord(part) && typeof part.text === 'string' ? part.text : ''))
+    .join('')
+    .trim()
+}
+
+function validateGeminiAction(value: unknown): GeminiAction {
+  if (!isRecord(value) || typeof value.action !== 'string') {
+    throw new Error('Model returned invalid JSON.')
+  }
+
+  const content = readOptionalString(value.content)
+
+  switch (value.action) {
+    case 'append':
+    case 'rewrite':
+    case 'transcribe':
+      if (content === undefined) {
+        throw new Error(`Model returned an invalid "${value.action}" action.`)
+      }
+      return { action: value.action, content }
+    case 'replace': {
+      const search = readOptionalString(value.search, { trim: true })
+      const replace = typeof value.replace === 'string' ? value.replace : undefined
+      if ((search === undefined || replace === undefined) && content === undefined) {
+        throw new Error('Model returned an invalid replace action.')
+      }
+      return {
+        action: 'replace',
+        content,
+        search,
+        replace,
+      }
+    }
+    default:
+      throw new Error(`Unsupported action "${value.action}".`)
+  }
+}
+
+function normalizeRawText(text: string): string {
+  return text
+    .trim()
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/\s*```$/, '')
+    .trim()
+}
+
+function readOptionalString(value: unknown, opts: { trim?: boolean } = {}): string | undefined {
+  if (typeof value !== 'string') return undefined
+  return opts.trim ? value.trim() || undefined : value
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }

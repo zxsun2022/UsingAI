@@ -24,18 +24,44 @@ export function useRecorder(): RecorderState {
   const resolveStopRef = useRef<((blob: Blob | null) => void) | null>(null)
   const cancelledRef = useRef(false)
 
-  const cleanup = useCallback(() => {
+  const resetVisualState = useCallback(() => {
     clearInterval(timerRef.current)
-    ctxRef.current?.close()
-    ctxRef.current = null
+    timerRef.current = 0
     setAnalyserNode(null)
-    streamRef.current?.getTracks().forEach((t) => t.stop())
-    streamRef.current = null
     setIsRecording(false)
     setDuration(0)
   }, [])
 
+  const releaseMediaResources = useCallback(async () => {
+    const audioContext = ctxRef.current
+    ctxRef.current = null
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+
+    if (audioContext) {
+      try {
+        await audioContext.close()
+      } catch {
+        // ignore cleanup failures from already-closed contexts
+      }
+    }
+  }, [])
+
+  const finalizeStop = useCallback(
+    async (blob: Blob | null) => {
+      chunksRef.current = []
+      recorderRef.current = null
+      await releaseMediaResources()
+      resolveStopRef.current?.(blob)
+      resolveStopRef.current = null
+      cancelledRef.current = false
+    },
+    [releaseMediaResources],
+  )
+
   const startRecording = useCallback(async () => {
+    if (recorderRef.current?.state === 'recording' || isRecording) return
+
     try {
       setErrorKey(null)
       chunksRef.current = []
@@ -70,13 +96,8 @@ export function useRecorder(): RecorderState {
       }
 
       recorder.onstop = () => {
-        if (cancelledRef.current) {
-          resolveStopRef.current?.(null)
-        } else {
-          const blob = new Blob(chunksRef.current, { type: mime })
-          resolveStopRef.current?.(blob)
-        }
-        resolveStopRef.current = null
+        const blob = cancelledRef.current ? null : new Blob(chunksRef.current, { type: mime })
+        void finalizeStop(blob)
       }
 
       recorder.start(100)
@@ -93,30 +114,36 @@ export function useRecorder(): RecorderState {
       } else {
         setErrorKey('micUnavailable')
       }
+      resetVisualState()
+      void releaseMediaResources()
     }
-  }, [])
+  }, [finalizeStop, isRecording, releaseMediaResources, resetVisualState])
 
   const stopRecording = useCallback((): Promise<Blob | null> => {
     return new Promise((resolve) => {
-      cleanup()
-
       if (recorderRef.current && recorderRef.current.state !== 'inactive') {
         resolveStopRef.current = resolve
+        resetVisualState()
         recorderRef.current.stop()
       } else {
+        resetVisualState()
+        void releaseMediaResources()
         resolve(null)
       }
     })
-  }, [cleanup])
+  }, [releaseMediaResources, resetVisualState])
 
   const cancelRecording = useCallback(() => {
     cancelledRef.current = true
-    cleanup()
 
     if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+      resetVisualState()
       recorderRef.current.stop()
+    } else {
+      resetVisualState()
+      void releaseMediaResources()
     }
-  }, [cleanup])
+  }, [releaseMediaResources, resetVisualState])
 
   return { isRecording, duration, analyserNode, errorKey, startRecording, stopRecording, cancelRecording }
 }
