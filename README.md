@@ -15,7 +15,7 @@
 
 - [`skills/ziwei-iztro-reader`](./skills/ziwei-iztro-reader): 基于 iztro 的紫微斗数排盘与分层解读 Skill
 - [`skills/ziwei-zhongzhou-reader`](./skills/ziwei-zhongzhou-reader): 在 iztro 排盘基础上融合王亭之中州派理论的深度解读 Skill
-- [`agents/structrade-os`](./agents/structrade-os): 面向 AI Agent 的个人投资操作系统规格
+- [`agents/structrade-os`](./agents/structrade-os): 面向 AI Agent 的个人投资操作系统规格，现已更新到 v3.0 宪章版
 
 ## 使用方式
 
