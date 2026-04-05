@@ -1,16 +1,8 @@
 # UsingAI
 
-[简体中文说明](./README.zh-CN.md)
+Language: [English](./README.md) | [中文](./README.zh-CN.md)
 
 Public showcase for my AI work, including distributable skills, reusable agents, and future additions such as prompts, experiments, and workflows.
-
-## Documentation Language Policy
-
-English is the primary language of this repository at the project level.
-
-- Root-level documentation should default to English, with a separate Chinese companion file when helpful.
-- The `agents/` directory may remain bilingual when that improves usability.
-- The `skills/` directory may remain Chinese-first when translating domain terms would reduce accuracy.
 
 ## Repository Scope
 

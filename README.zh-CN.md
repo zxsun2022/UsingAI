@@ -1,16 +1,8 @@
 # UsingAI
 
-[English README](./README.md)
+Language: [English](./README.md) | [中文](./README.zh-CN.md)
 
 这是一个用于公开展示我 AI 工作的仓库，包含可独立分发的 skills、可复用的 agents，以及后续会持续补充的 prompts、experiments 和 workflows。
-
-## 文档语言约定
-
-在项目层面，英文是本仓库的主语言。
-
-- 根目录文档默认使用英文；如有需要，可提供单独的中文对应文件。
-- `agents/` 目录在有助于使用时可以保持双语。
-- `skills/` 目录在专业术语翻译会影响准确性时，可以保持中文优先。
 
 ## 仓库定位
 
