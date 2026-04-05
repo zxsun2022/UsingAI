@@ -1,0 +1,4 @@
+interface:
+  display_name: "Institutional Equity Research Memo"
+  short_description: "Generate a buy-side public-equity memo with disciplined sourcing, variant-perception testing, and valuation rigor"
+  default_prompt: "Use $institutional_equity_research_memo to produce a buy-side, institution-grade memo on a public company. Research with English-language primary sources first, distinguish fact vs analysis vs inference, mark public-data gaps explicitly, and write the final memo in English unless the user requests another language."

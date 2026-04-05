@@ -28,6 +28,10 @@ This is a showcase and aggregation repository, not a single-skill package.
   [`skills/ziwei-iztro-reader`](./skills/ziwei-iztro-reader)：基于 `iztro` 的紫微斗数排盘与分层解读 Skill。
 - [`skills/ziwei-zhongzhou-reader`](./skills/ziwei-zhongzhou-reader): A deeper interpretation skill that extends `iztro` charting with Wang Tingzhi's Zhongzhou-school framework.  
   [`skills/ziwei-zhongzhou-reader`](./skills/ziwei-zhongzhou-reader)：在 `iztro` 排盘基础上融合王亭之中州派理论的深度解读 Skill。
+- [`skills/institutional_equity_research_memo`](./skills/institutional_equity_research_memo): A buy-side, institution-grade public-equity research memo skill for long/short analysis using public-source evidence.  
+  [`skills/institutional_equity_research_memo`](./skills/institutional_equity_research_memo)：面向公开股票多空研究、基于公开资料生成机构级投资备忘录的 Skill。
+- [`skills/axiom-extractor`](./skills/axiom-extractor): An incremental corpus-reading skill for distilling a person's core axioms, beliefs, and worldview from large collections of writings.  
+  [`skills/axiom-extractor`](./skills/axiom-extractor)：通过增量阅读大型文本语料，提炼作者核心公理、信念与世界观的 Skill。
 - [`agents/structrade-os`](./agents/structrade-os): A personal investment operating system spec for AI agents, currently updated to the v3.0 charter edition.  
   [`agents/structrade-os`](./agents/structrade-os)：面向 AI Agent 的个人投资操作系统规格，当前版本为 v3.0 宪章版。
 
