@@ -36,7 +36,7 @@
 - 默认遍历 `currentDetailed.palaces[]` 输出 12 宫完整明细，并附上 `tags`（本命/大限/流年/流月/流日/流时）。
 - 每条关键结论必须配证据链：`证据（宫位/星曜组合/四化或tags） -> 领域落点 -> 推断结论`。
 - 关键判断需区分层级来源（本命、流年、流月、流日），禁止跨层归因。
-- 输出前必须完成 `wang-references/` 深读：`general-principles.md` + 命宫主星 + 身宫/事业/财帛/福德主星；遇格局或辅煞冲突时补读 `patterns-part1.md`、`patterns-part2.md`、`auxiliary-stars.md`。
+- 输出前必须完成按需深读：`wang-references/reading-order.md`、`general-principles.md`、`palace-method.md` + 命宫主星 + 身宫/事业/财帛/福德主星 + `star-systems.md` 对应星系；遇流运补读 `flow-rules.md`；遇格局或辅煞冲突时补读 `patterns-part1.md`、`patterns-part2.md`、`auxiliary-stars.md`。
 - 完整解读时，本命/流年/流月/流日每层至少给出 3 条关键判断，且每条都附证据链。
 - 仅在开发调试时使用索引口径（`query.debug.includeIndexMapping=true`）。
 - 若平台有长度限制，末尾写`【未完成，下一部分继续】`并按同一模板编号续写，直到模板全部章节完成，不降级为极简摘要。

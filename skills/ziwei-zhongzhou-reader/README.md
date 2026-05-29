@@ -92,16 +92,23 @@ ziwei-zhongzhou-reader/
 ├── references/
 │   ├── input-schema.md          # 输入 JSON 结构说明
 │   ├── time-index.md            # 时辰索引对照表
-│   └── interpretation-template.md # 分层解读模板
+│   ├── interpretation-template.md # 分层解读模板
+│   ├── source-materials.md      # 本地书籍来源与公开引用边界
+│   └── golden-prompts.md        # 回归 QA 用例
 ├── wang-references/             # 王亭之理论参考（按主题拆分）
+│   ├── reading-order.md         # 按需读取顺序
 │   ├── general-principles.md    # 总论 + 推断杂谈
+│   ├── palace-method.md         # 十二宫联动与现代转译
+│   ├── star-systems.md          # 十四正曜星系索引
+│   ├── flow-rules.md            # 大限/流年/月/日叠加规则
 │   ├── star-ziwei.md            # 紫微星系
 │   ├── star-tianji.md           # 天机星系
 │   ├── star-taiyang.md          # 太阳星系
 │   ├── star-wuqu.md             # 武曲星系
 │   ├── star-tiantong.md         # 天同星系
 │   ├── star-lianzhen.md         # 廉贞星系
-│   ├── star-tianfu.md           # 天府 + 天相星系
+│   ├── star-tianfu.md           # 天府星系
+│   ├── star-tianxiang.md        # 天相星系
 │   ├── star-taiyin.md           # 太阴星系
 │   ├── star-tanlang.md          # 贪狼星系
 │   ├── star-jumen.md            # 巨门星系
@@ -123,12 +130,13 @@ ziwei-zhongzhou-reader/
 - `scripts/example.output.json` 是文档快照示例，不是回归测试黄金标准。
 - 示例输入 `scripts/example.input.json` 使用虚构出生信息（`2000-1-1`）和固定 `baseDate=2026-2-6`，便于公开展示与结果复现。
 - 需要刷新示例时，在当前 Skill 目录执行：`npm run regen:example`。
+- 本地原始书籍与转换全文放在 `books/`，仅作审校来源，已被 `.gitignore` 忽略，不随 Skill 发布。
 
 ---
 
 ## 版本信息
 
-- 当前 Skill 版本：`v0.2.0`
+- 当前 Skill 版本：`v0.3.0`
 - 版本来源：Git Tag（以仓库中的 tag 为准）
 
 ---

@@ -9,7 +9,7 @@
  */
 
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -266,6 +266,108 @@ console.log('Test 6: normalizedInput correctness');
   assert(fd0.dayOfWeek === 'Friday', 'futureDetailed[0].dayOfWeek is Friday for 2026-3-6');
   assert(fd0.dateSummary !== null && fd0.dateSummary !== undefined, 'futureDetailed dateSummary present');
   assert(typeof fd0.dateSummary.dailyHeavenlyStem === 'string', 'futureDetailed dailyHeavenlyStem is string');
+}
+
+// -------------------------------------------------------------------------
+// Test 8: Wang reference star files cover all 12 palaces exactly once
+// -------------------------------------------------------------------------
+console.log('Test 8: Wang star references cover 12 palaces');
+{
+  const refDir = resolve(__dirname, '..', 'wang-references');
+  const palaceNames = [
+    '命宫',
+    '兄弟宫',
+    '夫妻宫',
+    '子女宫',
+    '财帛宫',
+    '疾厄宫',
+    '迁移宫',
+    '交友宫',
+    '事业宫',
+    '田宅宫',
+    '福德宫',
+    '父母宫',
+  ];
+
+  for (const fileName of readdirSync(refDir).filter((name) => /^star-(?!systems\.md$)[a-z]+\.md$/.test(name))) {
+    const content = readFileSync(resolve(refDir, fileName), 'utf-8');
+    const palaceMatches = [...content.matchAll(/\*\*(命宫|兄弟宫|夫妻宫|子女宫|财帛宫|疾厄宫|迁移宫|交友宫|事业宫|田宅宫|福德宫|父母宫)\*\*/g)].map(
+      (match) => match[1],
+    );
+    const uniquePalaces = new Set(palaceMatches);
+    const duplicates = palaceMatches.filter((palace, index) => palaceMatches.indexOf(palace) !== index);
+    const missing = palaceNames.filter((palace) => !uniquePalaces.has(palace));
+
+    assert(uniquePalaces.size === 12, `${fileName} has all 12 unique palaces`);
+    assert(duplicates.length === 0, `${fileName} has no duplicate palace headings`);
+    assert(missing.length === 0, `${fileName} missing palaces: ${missing.join(', ') || 'none'}`);
+  }
+}
+
+// -------------------------------------------------------------------------
+// Test 9: Core references and source governance files exist
+// -------------------------------------------------------------------------
+console.log('Test 9: Core reference files exist');
+{
+  const rootDir = resolve(__dirname, '..');
+  const requiredFiles = [
+    'references/input-schema.md',
+    'references/time-index.md',
+    'references/interpretation-template.md',
+    'references/source-materials.md',
+    'references/golden-prompts.md',
+    'wang-references/reading-order.md',
+    'wang-references/general-principles.md',
+    'wang-references/palace-method.md',
+    'wang-references/star-systems.md',
+    'wang-references/flow-rules.md',
+    'wang-references/auxiliary-stars.md',
+    'wang-references/patterns-part1.md',
+    'wang-references/patterns-part2.md',
+  ];
+
+  for (const fileName of requiredFiles) {
+    assert(existsSync(resolve(rootDir, fileName)), `${fileName} exists`);
+  }
+
+  const rootGitignore = readFileSync(resolve(rootDir, '..', '..', '.gitignore'), 'utf-8');
+  const skillGitignore = readFileSync(resolve(rootDir, '.gitignore'), 'utf-8');
+  assert(rootGitignore.includes('skills/ziwei-zhongzhou-reader/books/'), 'root .gitignore excludes books');
+  assert(/^books\/$/m.test(skillGitignore), 'skill .gitignore excludes books');
+}
+
+// -------------------------------------------------------------------------
+// Test 10: Star-systems and golden prompt QA coverage
+// -------------------------------------------------------------------------
+console.log('Test 10: Star systems and golden prompts coverage');
+{
+  const rootDir = resolve(__dirname, '..');
+  const starSystems = readFileSync(resolve(rootDir, 'wang-references/star-systems.md'), 'utf-8');
+  const starSystemHeadings = [
+    '紫微星系',
+    '天机星系',
+    '太阳星系',
+    '武曲星系',
+    '天同星系',
+    '廉贞星系',
+    '天府星系',
+    '太阴星系',
+    '贪狼星系',
+    '巨门星系',
+    '天相星系',
+    '天梁星系',
+    '七杀星系',
+    '破军星系',
+  ];
+
+  for (const heading of starSystemHeadings) {
+    assert(starSystems.includes(`## ${heading}`), `star-systems has ${heading}`);
+  }
+
+  const promptQa = readFileSync(resolve(rootDir, 'references/golden-prompts.md'), 'utf-8');
+  const promptCount = [...promptQa.matchAll(/^## Prompt \d+:/gm)].length;
+  assert(promptCount >= 5, 'golden prompt QA has at least five prompts');
+  assert(promptQa.includes('不作医学诊断'), 'golden prompt QA includes medical safety expectation');
 }
 
 // -------------------------------------------------------------------------

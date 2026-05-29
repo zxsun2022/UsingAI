@@ -28,6 +28,9 @@ scripts/user*.output.json
 scripts/*.debug.output.json
 scripts/_test_*.json
 
+# Local source books and extracted reading copies
+books/
+
 # Temporary files
 *.tmp
 *.temp

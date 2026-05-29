@@ -75,6 +75,7 @@ description: 使用 iztro 生成紫微斗数排盘，融合王亭之中州派理
 
 对未来时间段：
 - 用 `futureDetailed[]` 做对比，强调趋势与时间窗口，不替代本命结构。
+- 完整解读前先读 `wang-references/reading-order.md`，再按命盘实际星曜读取相关 reference。
 
 ## 5. 输出格式（强制深度解读合同）
 
@@ -98,7 +99,7 @@ description: 使用 iztro 生成紫微斗数排盘，融合王亭之中州派理
 - 默认只使用 `flowStarsByRole` 进行解读；仅在开发调试时才读取 `flowStarsByIndex`。
 - 必须给出证据链：每条关键判断都要写清"宫位/星曜组合/四化或 tags/落点领域/推断结论"。
 - 必须按层级归因：本命、流年、流月、流日分开陈述，禁止跨层归因。
-- 完整解读前需按需读取 `wang-references/`，不得只依赖简表快速判断。
+- 完整解读前需按 `wang-references/reading-order.md` 按需读取 references，不得只依赖简表快速判断。
 - 完整解读时，本命/流年/流月/流日每层至少给出 3 条关键判断，且每条附证据链。
 - 若平台输出长度受限：在当前消息末尾写`【未完成，下一部分继续】`，并按同一模板编号续写，直到 1~8 节全部完成。
 
@@ -300,11 +301,14 @@ description: 使用 iztro 生成紫微斗数排盘，融合王亭之中州派理
 
 ### 8.1 何时读取
 
-- 基础必读（每次完整解读）：`wang-references/general-principles.md`。
+- 基础必读（每次完整解读）：`wang-references/reading-order.md`、`wang-references/general-principles.md`、`wang-references/palace-method.md`。
 - 条件必读：
+  - 完整本命盘：读取命宫、身宫、事业宫、财帛宫、福德宫相关 `star-*.md`，并读取 `star-systems.md` 中对应星系。
+  - 流年/流月/流日：读取 `flow-rules.md`，再读取流运命宫与重点宫位相关 `star-*.md`。
   - 发现显著格局（如杀破狼、机月同梁、府相朝垣）时，读取 `patterns-part1.md` 与 `patterns-part2.md`。
   - 出现辅佐/煞曜与四化冲突时，读取 `auxiliary-stars.md`。
 - 追问扩展：用户追问某宫位或某主星时，读取对应 `star-*.md` 后再下结论。
+- 资料来源口径：如需了解本地书籍来源和融合边界，读取 `references/source-materials.md`；不得直接依赖被 `.gitignore` 忽略的 `books/` 文件。
 
 ### 8.2 主星对应文件
 
@@ -330,6 +334,8 @@ description: 使用 iztro 生成紫微斗数排盘，融合王亭之中州派理
 - 参考文件用于补充 6.x 简表，不能替代结构化证据链。
 - 先读与当前结论最相关的文件，避免无关扩展。
 - 引用理论后必须落地到本盘宫位/星曜/四化层级，不得只堆术语。
+- 古代断语必须按 `palace-method.md` 转译为现代职业、关系、健康管理、财务行为或环境适应语义。
+- 流运判断必须按 `flow-rules.md` 标注层级，不把短期触发夸大成长期命运。
 
 ### 8.4 输出前自检
 
@@ -342,7 +348,12 @@ description: 使用 iztro 生成紫微斗数排盘，融合王亭之中州派理
 - `references/time-index.md`
 - `references/input-schema.md`
 - `references/interpretation-template.md`
+- `references/source-materials.md`
 - `wang-references/general-principles.md`
+- `wang-references/reading-order.md`
+- `wang-references/palace-method.md`
+- `wang-references/star-systems.md`
+- `wang-references/flow-rules.md`
 - `wang-references/auxiliary-stars.md`
 - `wang-references/patterns-part1.md`
 - `wang-references/patterns-part2.md`
