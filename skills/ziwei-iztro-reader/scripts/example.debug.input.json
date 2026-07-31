@@ -13,6 +13,7 @@
   "query": {
     "timezone": "Asia/Shanghai",
     "baseDate": "today",
+    "outputMode": "focused",
     "futureDates": [],
     "debug": {
       "includeIndexMapping": true

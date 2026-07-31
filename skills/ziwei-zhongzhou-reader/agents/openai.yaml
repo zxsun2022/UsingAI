@@ -1,4 +1,4 @@
 interface:
-  display_name: "紫微排盘与深度解读（王亭之版）"
-  short_description: "基于 iztro 排盘，融合王亭之中州派理论的紫微斗数分层深度解读"
-  default_prompt: "Use $ziwei-zhongzhou-reader to generate a Zi Wei chart and a full-depth, evidence-based layered interpretation from birth details. Run the iztro script, read reading-order plus relevant wang-references before concluding, keep natal/flow layers separate, and continue in numbered parts if output is truncated."
+  display_name: "紫微中州派聚焦解读"
+  short_description: "基于 iztro 排盘与王亭之中州派口径的决策解读"
+  default_prompt: "Use $ziwei-zhongzhou-reader to interpret a specific decision and deadline with focused Zhongzhou-school evidence."

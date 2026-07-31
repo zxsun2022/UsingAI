@@ -72,6 +72,12 @@ console.log('Test 1: Basic output structure');
   assert(out.generatedAt, 'has generatedAt');
   assert(out.normalizedInput, 'has normalizedInput');
   assert(out.outputPolicy, 'has outputPolicy');
+  assert(out.outputPolicy.detailLevel === 'focused', 'default interpretation level is focused');
+  assert(out.outputPolicy.chartDataLevel === 'full', 'chart data remains full');
+  assert(
+    out.outputPolicy.availableInterpretationLevels.join(',') === 'chart-only,focused,full',
+    'all interpretation levels are advertised',
+  );
   assert(out.natalSummary, 'has natalSummary');
   assert(out.currentDetailed, 'has currentDetailed');
   assert(Array.isArray(out.futureDetailed), 'futureDetailed is array');
@@ -210,6 +216,7 @@ console.log('Test 6: normalizedInput correctness');
     query: {
       timezone: 'Asia/Shanghai',
       baseDate: '2026-2-6',
+      outputMode: 'full',
       futureDates: ['2026-03-01', '2026-06-18'],
     },
   });
@@ -225,6 +232,7 @@ console.log('Test 6: normalizedInput correctness');
   assert(ni.baseDateSolar, 'baseDateSolar present');
   assert(ni.baseDateLunar, 'baseDateLunar present');
   assert(ni.baseDateDayOfWeek === 'Friday', 'baseDateDayOfWeek is Friday for 2026-2-6');
+  assert(out.outputPolicy.detailLevel === 'full', 'explicit full interpretation level is preserved');
 }
 
 // -------------------------------------------------------------------------
@@ -266,6 +274,22 @@ console.log('Test 6: normalizedInput correctness');
   assert(fd0.dayOfWeek === 'Friday', 'futureDetailed[0].dayOfWeek is Friday for 2026-3-6');
   assert(fd0.dateSummary !== null && fd0.dateSummary !== undefined, 'futureDetailed dateSummary present');
   assert(typeof fd0.dateSummary.dailyHeavenlyStem === 'string', 'futureDetailed dailyHeavenlyStem is string');
+}
+
+console.log('Test 7b: Invalid output mode rejected');
+{
+  const result = runRunnerExpectFail({
+    birth: {
+      confirmed: true,
+      calendar: 'solar',
+      date: '2000-1-1',
+      timeIndex: 7,
+      gender: 'female',
+      birthplace: 'Shanghai',
+    },
+    query: { outputMode: 'brief' },
+  });
+  assert(result.exitCode !== 0, 'exits with non-zero for invalid outputMode');
 }
 
 // -------------------------------------------------------------------------

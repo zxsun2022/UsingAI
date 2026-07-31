@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T02:41:52.336Z",
+  "generatedAt": "2026-07-30T23:52:26.327Z",
   "normalizedInput": {
     "calendar": "solar",
     "birthDate": "2000-1-1",
@@ -13,7 +13,13 @@
     "baseDateDayOfWeek": "Friday"
   },
   "outputPolicy": {
-    "detailLevel": "full",
+    "detailLevel": "focused",
+    "chartDataLevel": "full",
+    "availableInterpretationLevels": [
+      "chart-only",
+      "focused",
+      "full"
+    ],
     "mappingModes": [
       "by_role"
     ],

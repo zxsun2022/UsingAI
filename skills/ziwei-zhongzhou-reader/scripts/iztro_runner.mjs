@@ -469,6 +469,10 @@ if (!birthplace) {
 
 const timezone = query.timezone || 'Asia/Shanghai';
 const includeIndexMapping = query?.debug?.includeIndexMapping === true;
+const outputMode = query.outputMode ?? 'focused';
+if (!['chart-only', 'focused', 'full'].includes(outputMode)) {
+  fail('query.outputMode must be chart-only, focused, or full.');
+}
 
 let baseDateText;
 if (!query.baseDate || query.baseDate === 'today') {
@@ -487,7 +491,8 @@ try {
 } catch (error) {
   if (error.code === 'ERR_MODULE_NOT_FOUND' || error.code === 'MODULE_NOT_FOUND') {
     fail(
-      'iztro is not installed. Run: cd scripts && npm install\n' +
+      'iztro is not installed. In a writable skill, run: cd scripts && npm install. ' +
+        'If the skill is read-only, copy the whole skill to a writable temporary directory first.\n' +
         `  Original error: ${error.message}`,
     );
   }
@@ -569,7 +574,9 @@ const output = {
     baseDateDayOfWeek: dayOfWeekFromSolar(baseDateText),
   },
   outputPolicy: {
-    detailLevel: 'full',
+    detailLevel: outputMode,
+    chartDataLevel: 'full',
+    availableInterpretationLevels: ['chart-only', 'focused', 'full'],
     mappingModes: includeIndexMapping ? ['by_role', 'by_index'] : ['by_role'],
     includeIndexMapping,
     requiredConfirmation: true,

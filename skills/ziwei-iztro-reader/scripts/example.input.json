@@ -13,6 +13,7 @@
   "query": {
     "timezone": "Asia/Shanghai",
     "baseDate": "2026-2-6",
+    "outputMode": "focused",
     "futureDates": ["2026-03-01", "2026-06-18"]
   }
 }
