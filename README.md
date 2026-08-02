@@ -21,6 +21,10 @@ This is a showcase and aggregation repository, not a single-skill package.
 - [`skills/axiom-extractor`](./skills/axiom-extractor): An incremental corpus-reading skill for distilling a person's core axioms, beliefs, and worldview from large collections of writings.
 - [`agents/structrade-os`](./agents/structrade-os): A personal investment operating system spec for AI agents, currently updated to the v3.0 charter edition.
 
+## Templates
+
+- [`templates/AGENTS.md`](./templates/AGENTS.md): A repository-level operating contract template for coding agents.
+
 ## Usage
 
 1. Clone this repository.

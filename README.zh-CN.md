@@ -21,6 +21,10 @@ Language: [English](./README.md) | [中文](./README.zh-CN.md)
 - [`skills/axiom-extractor`](./skills/axiom-extractor)：通过增量阅读大型文本语料，提炼作者核心公理、信念与世界观的 Skill。
 - [`agents/structrade-os`](./agents/structrade-os)：面向 AI Agent 的个人投资操作系统规格，当前版本为 v3.0 宪章版。
 
+## 模板
+
+- [`templates/AGENTS.md`](./templates/AGENTS.md)：适用于 coding agent 的仓库级协作规范模板。
+
 ## 使用方式
 
 1. 克隆本仓库。
