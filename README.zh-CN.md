@@ -21,6 +21,10 @@ Language: [English](./README.md) | [中文](./README.zh-CN.md)
 - [`skills/axiom-extractor`](./skills/axiom-extractor)：通过增量阅读大型文本语料，提炼作者核心公理、信念与世界观的 Skill。
 - [`agents/structrade-os`](./agents/structrade-os)：面向 AI Agent 的个人投资操作系统规格，当前版本为 v3.0 宪章版。
 
+## 方法论
+
+- [`docs/agentic-engineering/day-0-kit.zh-CN.md`](./docs/agentic-engineering/day-0-kit.zh-CN.md)：独立开发者与 AI Coding Agent 开始新项目时的 Day-0 决策、协作模式、证据验收与经验累积方法。
+
 ## 模板
 
 - [`templates/AGENTS.md`](./templates/AGENTS.md)：适用于 coding agent 的仓库级协作规范模板。
